@@ -1,46 +1,83 @@
 const userScema = require("../model/userScema")
 const asyncHandler = require('express-async-handler');
+const bcrypt = require("bcryptjs");
+const jwt = require('jsonwebtoken');
+require('dotenv').config();
 
-// @ for creating user {"userName":"jitu", "userEmail":"jitu@gmail.com","password":"hi","confirmPassword":"s"}
+const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY
+
+// @ for creating user {"userName":"jitu", "userEmail":"jitu@gmail.com","password":"hi","passwordConfirm":"hi"}
 const setUser = asyncHandler(async (req, res) => {
-    let error = null;
     try {
+        const { userName, userEmail, password } = req.body;
 
-        console.log(req.body);
-
-        let userName = req.body.userName || null;
-        let userEmail = req.body.userEmail || null
-        let password = req.body.password || null
-        let confirmPassword = req.body.confirmPassword || null;
-
-        if (userName == null || userName == "") {
-            error = "User Name is required."
-        } else if (userEmail == null || userEmail == "") {
-            error = "User Email is required."
-        } else if (password == null || password == "") {
-            error = "Password is required."
-        } else if (confirmPassword == null || confirmPassword == "") {
-            error = "Confirmation passowrd is required."
-        } else if (password !== confirmPassword) {
-            error = "Password and confirm password dose not match."
-        } else if (userName && userEmail && password) {
-            const cUser = await userScema.create({
-                username: userName,
-                email: userEmail,
-                password: password
-            })
-            res.status(201).send(cUser)
-            return;
-        }
-        res.status(400).send(error)
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(password, salt)
+        const newUser = await userScema.create({
+            username: userName,
+            email: userEmail,
+            password: hashedPassword
+        });
+        res.status(201).json({
+            message: "User registered successfully!",
+            user: { id: newUser._id, username: newUser.username, email: newUser.email }
+        });
     } catch (err) {
-        error = err.message
-        res.status(400).send(error)
+        res.status(500).send("Server error.");
     }
 })
 
+// for genarating user update token
+
+const getUserUpdateAuthToken = asyncHandler(async (req, res) => {
+    const { userId, password } = req.body;
+    console.log(req.body);
+
+    try {
+        if (!userId) return res.status(400).send("User ID is required.");
+
+        const foundUser = await userScema.findById(userId);
+        if (!foundUser) return res.status(404).send("User not found.");
+
+        const isPasswordMatch = await bcrypt.compare(password, foundUser.password);
+        if (!isPasswordMatch) return res.status(403).send("Access denied. Incorrect password.");
+
+        const token = jwt.sign({ userId: userId }, JWT_SECRET_KEY, { expiresIn: '20s' }); // Expires in 20 seconds
+        res.status(200).json({ message: "Authentication successful.", token });
+    } catch (err) {
+        console.error("Error during user validation:", err.message);
+        res.status(500).send("Server error.");
+    }
+});
 
 
+const updateUser = asyncHandler(async (req, res) => {
+    try {
+        const { userName, userEmail, password } = req.body;
 
+        // Get user ID from JWT Token
+        const userId = req.user.userId;
 
-module.exports = { setUser }
+        // Find the user
+        const foundUser = await userScema.findById(userId);
+        if (!foundUser) return res.status(404).send("User not found.");
+
+        // Update only provided fields, keep the rest unchanged
+        if (userName) foundUser.username = userName;
+        if (userEmail) foundUser.email = userEmail;
+        if (password) {
+            
+            const salt = await bcrypt.genSalt(10);
+            foundUser.password = await bcrypt.hash(password, salt);
+        }
+
+        // Save updated user details
+        await foundUser.save();
+        res.status(200).send(`User updated successfully.`);
+    } catch (err) {
+        console.error("Error during user update:", err.message);
+        res.status(500).send("Server error.");
+    }
+})
+
+module.exports = { setUser, updateUser, getUserUpdateAuthToken }
