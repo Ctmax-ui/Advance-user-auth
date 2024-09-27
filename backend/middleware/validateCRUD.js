@@ -3,65 +3,59 @@ require('dotenv').config();
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY
 
+
 // for creating user validation middleware
 const validateCreateUserInput = (req, res, next) => {
-    const { userName, userEmail, password, passwordConfirm } = req.body;
+    const { userName, userEmail, password, } = req.body;
 
     if (!userName || userName.trim() === '') {
-        return res.status(400).send("User Name is required.");
-    }
+        return res.status(400).json({ error: "User Name is required." });
+    };
     if (!userEmail || userEmail.trim() === '') {
-        return res.status(400).send("User Email is required.");
+        return res.status(400).json({ error: "User Email is required." });
+    };
+    if (userEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userEmail.trim())) {
+        return res.status(400).json({error: "please recheck the input email"})
     }
     if (!password || password.trim() === '') {
-        return res.status(400).send("Password is required.");
-    }
-    if (!passwordConfirm || passwordConfirm.trim() === '') {
-        return res.status(400).send("Confirmation password is required.");
-    }
-    
-    if (password !== passwordConfirm) {
-        return res.status(400).send("Password and confirmation password do not match.");
-    }
+        return res.status(400).json({ error: "Password is required." });
+    };
 
-    next()
+
+    next();
 }
 
 // authenticate user update token
 const authenticateUserUpdateToken = (req, res, next) => {
     const token = req.body.userUpdateToken;
-    if (!token) return res.status(401).send("Access denied. No token provided.");
+    if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
+    
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET_KEY);
         req.user = decoded; // Add user details to the request object
         next();
     } catch (err) {
-        res.status(401).send("Invalid token. Please log in again.");
+        res.status(401).json({ error: "Invalid token. Please Genarate token again" });
     }
 };
 
 // for updating user validation middleware
-const validateUpdateUserInput = (req,res,next)=>{
+const validateUpdateUserInput = (req, res, next) => {
 
-    // const {userId, userName, userEmail, password, sessionToken } = req.body;
+    const { userName, userEmail, password } = req.body;
 
-    // if (!userId || userId.trim()===''){
-    //     return res.status(400).send("User Id is required.");
-    // }
-    // if (!password || password.trim() === '') {
-    //     return res.status(400).send("Password is required.");
-    // }
-    // if (!userName || userName.trim() === '') {
-    //     return res.status(400).send("User Name is required.");
-    // }
-    // if (!userEmail || userEmail.trim() === '') {
-    //     return res.status(400).send("User Email is required.");
-    // }
-    // // if (!sessionToken || sessionToken.trim() === '') {
-    // //     return res.status(400).send("Confirmation password is required.");
-    // // }
-    next()
-}
+    if (userName && userName.length > 15) return res.status(400).json({ error: "User name is too long." });
 
-module.exports = {validateCreateUserInput, validateUpdateUserInput, authenticateUserUpdateToken}
+    if (password && password.length > 30) {
+        return res.status(400).json({ error: "Bro calm down, your password is way to secure within 30 characters." })
+    } else if (password && password.length < 5) {
+        return res.status(400).json({ error: "Your password is too short." })
+    };
+
+    if (userEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userEmail.trim())) res.status(400).json({ error: "User email is invalid, check the Email." });
+
+    next();
+};
+
+module.exports = { validateCreateUserInput, validateUpdateUserInput, authenticateUserUpdateToken }
