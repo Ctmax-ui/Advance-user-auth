@@ -4,7 +4,9 @@ const connect = require('./backend/db/dbConnect')
 const cors = require('cors')
 connect()
 
-app.use(cors()); 
+app.use(cors({
+    origin: '*',
+})); 
 app.use(express.json());
 
 app.use('/api/v1', require('./backend/routes/route') )

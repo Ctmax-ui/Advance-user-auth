@@ -15,7 +15,7 @@ const validateCreateUserInput = (req, res, next) => {
         return res.status(400).json({ error: "User Email is required." });
     };
     if (userEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userEmail.trim())) {
-        return res.status(400).json({error: "please recheck the input email"})
+        return res.status(400).json({ error: "please recheck the input email" })
     }
     if (!password || password.trim() === '') {
         return res.status(400).json({ error: "Password is required." });
@@ -25,11 +25,28 @@ const validateCreateUserInput = (req, res, next) => {
     next();
 }
 
+// for user login validation
+const validateLoginUserInput = (req, res, next) => {
+    const {userEmail, password, } = req.body;
+    if (!userEmail || userEmail.trim() === '') {
+        return res.status(400).json({ error: "User Email is required." });
+    };
+    if (userEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userEmail.trim())) {
+        return res.status(400).json({ error: "please recheck the input email" })
+    }
+    if (!password || password.trim() === '') {
+        return res.status(400).json({ error: "Password is required." });
+    };
+    
+    next()
+}
+
+
 // authenticate user update token
 const authenticateUserUpdateToken = (req, res, next) => {
     const token = req.body.userUpdateToken;
     if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
-    
+
 
     try {
         const decoded = jwt.verify(token, JWT_SECRET_KEY);
@@ -58,4 +75,4 @@ const validateUpdateUserInput = (req, res, next) => {
     next();
 };
 
-module.exports = { validateCreateUserInput, validateUpdateUserInput, authenticateUserUpdateToken }
+module.exports = { validateCreateUserInput, validateLoginUserInput, validateUpdateUserInput, authenticateUserUpdateToken }
