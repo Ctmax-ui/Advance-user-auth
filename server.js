@@ -1,13 +1,17 @@
 const express = require('express');
 const app = express()
 const connect = require('./backend/db/dbConnect')
-const cors = require('cors')
+const cors = require('cors');
+const cookieParser = require('cookie-parser');
 connect()
 
 app.use(cors({
-    origin: '*',
+    origin: 'http://localhost:5173',
+    credentials: true,
 })); 
 app.use(express.json());
+app.use(cookieParser());
+
 
 app.use('/api/v1', require('./backend/routes/route') )
 

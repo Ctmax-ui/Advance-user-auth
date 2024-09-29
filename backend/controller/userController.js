@@ -5,6 +5,7 @@ const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
+const JWT_REFRESH_KEY = process.env.JWT_REFRESH_KEY
 
 // @ for creating user {"userName":"jitu", "userEmail":"jitu@gmail.com","password":"hi","passwordConfirm":"hi"}
 const setUser = asyncHandler(async (req, res) => {
@@ -30,24 +31,62 @@ const setUser = asyncHandler(async (req, res) => {
 
 // @ for login user
 const loginUser = asyncHandler(async (req, res) => {
+    console.log(req.body);
     try {
-        const {userEmail, password } = req.body;
-        
-        const foundUser = await userScema.findOne({ email:userEmail});
-        if (!foundUser) return res.status(400).json({ success:false, message: "Useremail or password is incorrect." });
+        const { userEmail, password } = req.body;
+
+        const foundUser = await userScema.findOne({ email: userEmail });
+        if (!foundUser) return res.status(400).json({ success: false, message: "Useremail or password is incorrect." });
 
 
         const isPasswordMatch = await bcrypt.compare(password, foundUser.password);
-        if (!isPasswordMatch) return res.status(400).json({ success:false, message: "Useremail or password is incorrect." });
+        if (!isPasswordMatch) return res.status(400).json({ success: false, message: "Useremail or password is incorrect." });
 
-        const token = jwt.sign({ userId: foundUser.id, userPass:foundUser.password }, JWT_SECRET_KEY, { expiresIn: '30m' });
+        const accessToken = jwt.sign({ userId: foundUser._id }, JWT_SECRET_KEY, { expiresIn: '15m' });
+        const refreshToken = jwt.sign({ userId: foundUser._id }, JWT_REFRESH_KEY, { expiresIn: '7d' });
 
-        res.status(201).json({success:true, sessionKey: token, });
+
+        res.cookie('refreshToken', refreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: 'Strict',
+            maxAge: 24 * 60 * 60 * 1000, //one day
+        });
+
+        res.status(200).json({ success: true, accessToken: accessToken, });
 
     } catch (err) {
         res.status(400).json({ success: false, error: "Server error." });
     }
-})
+});
+
+
+const refreshToken = (req, res) => {
+    const { refreshToken } = req.cookies;
+    try {
+        if (!refreshToken) return res.status(401).json({ error: "Unauthorized" });
+
+        jwt.verify(refreshToken, JWT_REFRESH_KEY, (err, user) => {
+            if (err) return res.status(403).json({ success: false, error: "Invalid refresh token" });
+
+            const newAccessToken = jwt.sign({ userId: user.userId, password: user.password }, JWT_SECRET_KEY, { expiresIn: '15m' });
+
+            res.json({ success: true, accessToken: newAccessToken });
+        });
+    } catch (error) {
+
+    }
+};
+
+
+const logout = (req, res) => {
+    res.clearCookie('refreshToken');
+    res.json({ message: "Logged out successfully" });
+};
+
+
+
+
 
 // @ for genarating user update token with it user can update their email pass or name
 const getUserUpdateAuthToken = asyncHandler(async (req, res) => {
@@ -96,4 +135,4 @@ const updateUser = asyncHandler(async (req, res) => {
     }
 })
 
-module.exports = { setUser,loginUser, updateUser, getUserUpdateAuthToken }
+module.exports = { setUser, loginUser, logout, refreshToken, updateUser, getUserUpdateAuthToken }
