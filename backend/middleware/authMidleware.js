@@ -3,28 +3,38 @@ const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
 require('dotenv').config();
 
-
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
-const JWT_REFRESH_KEY = process.env.JWT_REFRESH_KEY
+const JWT_REFRESH_KEY = process.env.JWT_REFRESH_KEY;
 
 const authMiddleware = (req, res, next) => {
-    console.log(req.cookies);
     try {
-        const { refreshToken } = req.cookies;
+        const { accessToken } = req.body;
+        const { refreshToken } = req.cookies; // Accessing refresh token from cookies
 
-        if (!refreshToken) return res.status(401).json({ success: false, message: "Unauthorized" });
 
-        jwt.verify(refreshToken, JWT_SECRET_KEY, (err, user) => {
-            if (err) return res.status(403).json({ success: false, message: "Forbidden" });
+        if (!accessToken || !refreshToken) {
+            return res.status(400).json({ success: false, message: "Unauthorized" });
+        }
 
-            req.user = user;
-            console.log(req.user);
-            next();
+        jwt.verify(refreshToken, JWT_REFRESH_KEY, (err, decodedRefresh) => {
+            if (err) {
+                console.error("Refresh token verification failed:", err);
+                return res.status(401).json({ success: false,access:false, message: "Unauthorized" });
+            }
+
+            jwt.verify(accessToken, JWT_REFRESH_KEY, (err, decodedAccess) => {
+                if (err) {
+                    console.error("Access token verification failed:", err);
+                    return res.status(401).json({ success: false,access:false, message: "Unauthorized" });
+                }
+                req.user = decodedAccess; // Attach user info to request
+                next(); // Call next middleware
+            });
         });
     } catch (error) {
-        console.log(error);
-        res.status(400).json({success:false, error: "unauthorize"})
+        console.error("Error in auth middleware:", error);
+        return res.status(400).json({ success: false, error: "Unauthorized" });
     }
 };
 
-module.exports = { authMiddleware }
+module.exports = { authMiddleware };

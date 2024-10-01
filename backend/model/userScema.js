@@ -8,7 +8,10 @@ const createUserScema = new mongoose.Schema({
     emailVerified: { type: Boolean, default: false },
     emailVerificationToken: { type: String, default: null },
 
-    userUpdateToken: {type:String, default: null},
+    failedLoginAttempts: { type: Number, default: 0 },
+    lockoutUntil: { type: Date, default: null },
+
+    twoFactorAuthentication: {type: Boolean, default: false},
 
     password: { type: String, required: [true, 'Password cannot be empty'] },
     passwordResetToken: { type: String, default: null },

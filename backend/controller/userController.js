@@ -31,37 +31,62 @@ const setUser = asyncHandler(async (req, res) => {
 
 // @ for login user
 const loginUser = asyncHandler(async (req, res) => {
-    console.log(req.body);
     try {
         const { userEmail, password } = req.body;
 
         const foundUser = await userScema.findOne({ email: userEmail });
-        if (!foundUser) return res.status(400).json({ success: false, message: "Useremail or password is incorrect." });
+        if (!foundUser) {
+            return res.status(400).json({ success: false, message: "User email or password is incorrect." });
+        }
 
+        // Check if the account is locked
+        if (foundUser.lockoutUntil && foundUser.lockoutUntil > Date.now()) {
+            const remainingTime = Math.ceil((foundUser.lockoutUntil - Date.now()) / 1000);
+            return res.status(403).json({ success: false,remainingTime: remainingTime, message: 'Account is locked. Please try again later.' });
+        }
 
         const isPasswordMatch = await bcrypt.compare(password, foundUser.password);
-        if (!isPasswordMatch) return res.status(400).json({ success: false, message: "Useremail or password is incorrect." });
+        if (!isPasswordMatch) {
+            foundUser.failedLoginAttempts = (foundUser.failedLoginAttempts || 0) + 1;
 
-        const accessToken = jwt.sign({ userId: foundUser._id }, JWT_SECRET_KEY, { expiresIn: '15m' });
+            // Lock the account if attempts exceed limit
+            if (foundUser.failedLoginAttempts >= 5) {
+                foundUser.lockoutUntil = Date.now() + 30 * 60 * 1000; // Lock for 30 minutes
+            }
+
+            await foundUser.save(); // Save the updated user info
+            return res.status(400).json({ success: false, message: "User email or password is incorrect." });
+        }
+
+        // Reset failed attempts on successful login
+        foundUser.failedLoginAttempts = 0;
+        foundUser.lockoutUntil = null;
+        await foundUser.save();
+
         const refreshToken = jwt.sign({ userId: foundUser._id }, JWT_REFRESH_KEY, { expiresIn: '7d' });
 
+        // Save in local storage
+        const accessToken = jwt.sign({ userId: foundUser._id }, JWT_REFRESH_KEY, { expiresIn: '15m' });
 
         res.cookie('refreshToken', refreshToken, {
-            httpOnly: true,
-            secure: true,
-            sameSite: 'Strict',
-            maxAge: 24 * 60 * 60 * 1000, //one day
+            httpOnly: true,     // Must be true to protect against XSS attacks
+            secure: false,      // Set to true in production if using HTTPS
+            sameSite: 'Strict', // Strict mode for better security
+            maxAge: 24 * 60 * 60 * 1000, // One day
+            path: "/",
         });
 
-        res.status(200).json({ success: true, accessToken: accessToken, });
-
+        res.status(200).json({ success: true, accessToken: accessToken });
     } catch (err) {
-        res.status(400).json({ success: false, error: "Server error." });
+        console.error(err); // Log the error for debugging
+        res.status(500).json({ success: false, error: "Server error." });
     }
 });
 
 
+// for genarating access token
 const refreshToken = (req, res) => {
+    // console.log(req);
     const { refreshToken } = req.cookies;
     try {
         if (!refreshToken) return res.status(401).json({ error: "Unauthorized" });
@@ -69,7 +94,7 @@ const refreshToken = (req, res) => {
         jwt.verify(refreshToken, JWT_REFRESH_KEY, (err, user) => {
             if (err) return res.status(403).json({ success: false, error: "Invalid refresh token" });
 
-            const newAccessToken = jwt.sign({ userId: user.userId, password: user.password }, JWT_SECRET_KEY, { expiresIn: '15m' });
+            const newAccessToken = jwt.sign({ userId: user.userId, password: user.password }, JWT_REFRESH_KEY, { expiresIn: '20s' });
 
             res.json({ success: true, accessToken: newAccessToken });
         });
@@ -78,13 +103,23 @@ const refreshToken = (req, res) => {
     }
 };
 
-
+// for logout user
 const logout = (req, res) => {
-    res.clearCookie('refreshToken');
-    res.json({ message: "Logged out successfully" });
+    // console.log(res, "line 84");
+    res.clearCookie('refreshToken', {
+        httpOnly: true,
+        secure: false,
+        sameSite: 'Strict',
+        path: "/"
+    });
+
+    res.status(200).json({ success: true, message: "Logged out successfully" });
 };
 
 
+const userHasAccess = (req, res) => {
+    res.json({success:true,message:"you has access", access:true})
+}
 
 
 
@@ -135,4 +170,4 @@ const updateUser = asyncHandler(async (req, res) => {
     }
 })
 
-module.exports = { setUser, loginUser, logout, refreshToken, updateUser, getUserUpdateAuthToken }
+module.exports = { setUser, loginUser, logout, refreshToken, updateUser, getUserUpdateAuthToken , userHasAccess}
