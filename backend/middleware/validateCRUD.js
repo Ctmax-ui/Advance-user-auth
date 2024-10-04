@@ -45,6 +45,8 @@ const validateLoginUserInput = (req, res, next) => {
 // authenticate user update token
 const authenticateUserUpdateToken = (req, res, next) => {
     const token = req.body.userUpdateToken;
+    console.log(req.body);
+    
     if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
 
 
@@ -66,7 +68,7 @@ const validateUpdateUserInput = (req, res, next) => {
 
     if (password && password.length > 30) {
         return res.status(400).json({ error: "Bro calm down, your password is way to secure within 30 characters." })
-    } else if (password && password.length < 5) {
+    } else if (password && password.length < 4) {
         return res.status(400).json({ error: "Your password is too short." })
     };
 

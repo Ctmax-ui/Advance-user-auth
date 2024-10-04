@@ -6,16 +6,25 @@ const createUserScema = new mongoose.Schema({
 
     email: { type: String, required: [true, 'Email cannot be empty'] },
     emailVerified: { type: Boolean, default: false },
-    emailVerificationToken: { type: String, default: null },
+    emailVerificationOTP: { type: String, default: null },
 
     failedLoginAttempts: { type: Number, default: 0 },
     lockoutUntil: { type: Date, default: null },
 
-    twoFactorAuthentication: {type: Boolean, default: false},
+    twoFactorAuthentication: { type: Boolean, default: false },
 
     password: { type: String, required: [true, 'Password cannot be empty'] },
-    passwordResetToken: { type: String, default: null },
-    passwordResetOTP: { type: String, default: null }
+    passwordResetOTP: { type: String, default: null },
+
+    connectedDevices: [
+        {
+            _id: false,
+            deviceName: { type: String, },
+            ipAddress: { type: String, required: true },
+            loginTime: { type: Date, default: Date.now },
+        },
+    ],
+
 }, {
     timestamps: true,
     collection: 'user'

@@ -5,7 +5,8 @@ const { setUser,
     refreshToken,
     updateUser,
     getUserUpdateAuthToken,
-    userHasAccess } = require('../controller/userController');
+    userHasAccess,
+    getUserDetails } = require('../controller/userController');
 
 const { validateCreateUserInput,
     validateLoginUserInput,
@@ -13,7 +14,7 @@ const { validateCreateUserInput,
     authenticateUserUpdateToken } = require('../middleware/validateCRUD');
 
 const { authMiddleware } = require('../middleware/authMidleware');
-const { loginLimiter } = require('../middleware/limiterMiddleware')
+const { loginLimiter, logoutLimiter, registerLimiter } = require('../middleware/limiterMiddleware')
 
 
 
@@ -22,7 +23,7 @@ const router = express.Router();
 
 // for user creating and updating
 router.route('/createuser')
-    .post(validateCreateUserInput, setUser);
+    .post(registerLimiter,validateCreateUserInput, setUser);
 
 
 
@@ -35,16 +36,18 @@ router.route('/refreshtoken').post(refreshToken);
 
 
 // for logout
-router.route('/logout').post(logout);
+router.route('/logout').post(logoutLimiter,logout);
 
 router.use(authMiddleware);
 
 router.route('/userhasaccess').post(userHasAccess);
 
 
-
 // for user updating auth token
 router.route("/updateuser").post(authenticateUserUpdateToken, validateUpdateUserInput, updateUser);
 router.route("/userupdatetoken").post(getUserUpdateAuthToken);
+
+// getting user details
+router.route("/getuser").post(getUserDetails)
 
 module.exports = router
