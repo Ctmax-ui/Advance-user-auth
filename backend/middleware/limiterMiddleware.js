@@ -38,5 +38,33 @@ const registerLimiter = rateLimit({
         });
     }
 });
+            
+const passwordResetLinkLimit = rateLimit({
+    windowMs: 30 * 60 * 1000, // 30 minutes.
+    max: 5, // limit each IP to 5 login requests per windowMs.
+    handler: (req, res) => {
+        const timeUntilReset = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+        res.status(429).json({
+            success: false,
+            message: 'Too many attempts. Please try again later.',
+            remainingTime: timeUntilReset
+        });
+    }
+});
 
-module.exports = { loginLimiter, logoutLimiter,registerLimiter }
+const passwordResetAndUpdateLimit = rateLimit({
+    windowMs: 30 * 60 * 1000, // 30 minutes.
+    max: 5, // limit each IP to 5 login requests per windowMs.
+    handler: (req, res) => {
+        const timeUntilReset = Math.ceil((req.rateLimit.resetTime - Date.now()) / 1000);
+        res.status(429).json({
+            success: false,
+            message: 'too meny attempts, try again later.',
+            remainingTime: timeUntilReset
+        });
+    }
+});
+
+
+
+module.exports = { loginLimiter, logoutLimiter,registerLimiter,passwordResetLinkLimit, passwordResetAndUpdateLimit }

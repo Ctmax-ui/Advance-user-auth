@@ -2,6 +2,9 @@ const userScema = require("../model/userScema");
 const asyncHandler = require('express-async-handler');
 const bcrypt = require("bcryptjs");
 const jwt = require('jsonwebtoken');
+const crypto = require("crypto");
+const emailSender = require("../functions/emailSender")
+
 require('dotenv').config();
 
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
@@ -37,7 +40,7 @@ const setUser = asyncHandler(async (req, res) => {
             maxAge: 24 * 60 * 60 * 1000, // One day
             path: "/",
         });
-
+        // const emailResponse = emailSender(userEmail, "Account create on api", "<p>Thank you for registering on out site.</p>")
         res.status(201).json({
             success: true,
             message: "Registered successfully!",
@@ -108,6 +111,7 @@ const loginUser = asyncHandler(async (req, res) => {
             path: "/",
         });
 
+        // const emailResponse = emailSender(userEmail, "Login on Api", "<p>Hi, i am here to inform you that somone logged into your device, it its not you contact us.</p>")
         res.status(200).json({
             success: true,
             accessToken: accessToken,
@@ -149,10 +153,10 @@ const logout = async (req, res) => {
     try {
         const deviceName = req.headers['sec-ch-ua-platform'] || 'Unknown Device';
         const trimmedDeviceName = deviceName ? deviceName.replace(/['"]+/g, '').trim() : '';
-        const ipAddress = req.ip|| req.connection.remoteAddress;
+        const ipAddress = req.ip || req.connection.remoteAddress;
 
         const decoded = jwt.verify(req.cookies.refreshToken, JWT_REFRESH_KEY);
-        console.log("Decoded JWT:", decoded);
+        // console.log("Decoded JWT:", decoded);
 
         const foundUser = await userScema.findById(decoded.userId);
         if (!foundUser) {
@@ -167,7 +171,7 @@ const logout = async (req, res) => {
 
         res.clearCookie('refreshToken', {
             httpOnly: true,
-            secure: false, 
+            secure: false,
             sameSite: 'Strict',
             path: "/"
         });
@@ -179,14 +183,10 @@ const logout = async (req, res) => {
     }
 };
 
-
-
-
+// check if user has access or not 
 const userHasAccess = (req, res) => {
     res.json({ success: true, message: "you has access", access: true })
 }
-
-
 
 // @ for genarating user update token with it user can update their email pass or name
 const getUserUpdateAuthToken = asyncHandler(async (req, res) => {
@@ -235,7 +235,7 @@ const updateUser = asyncHandler(async (req, res) => {
     }
 })
 
-
+// get current user details
 const getUserDetails = asyncHandler(async (req, res) => {
     try {
         const { accessToken } = req.body;
@@ -243,7 +243,7 @@ const getUserDetails = asyncHandler(async (req, res) => {
         if (!accessToken) {
             return res.status(400).json({ error: 'No access token provided.' });
         }
-        console.log(req.body);
+        // console.log(req.body);
 
         const decoded = jwt.verify(accessToken, JWT_REFRESH_KEY);
 
@@ -274,4 +274,69 @@ const getUserDetails = asyncHandler(async (req, res) => {
     }
 })
 
-module.exports = { setUser, loginUser, logout, refreshToken, updateUser, getUserUpdateAuthToken, userHasAccess, getUserDetails }
+// for requesting password reset link
+const requestPaswordResetLink = asyncHandler(async (req, res) => {
+    try {
+        const { userEmail } = req.body;
+        const user = await userScema.findOne({ email: userEmail });
+        if (!user) return res.status(404).json({ message: "User not found" });
+
+        const resetToken = crypto.randomBytes(32).toString("hex");
+
+        const hashedToken = crypto.createHash("sha256").update(resetToken).digest("hex");
+
+        user.resetPasswordToken = hashedToken;
+        user.resetPasswordExpires = Date.now() + 15 * 60 * 1000; // Token expires in 15 mins
+        await user.save();
+
+        const resetUrl = `${process.env.RESET_LINK_TARGET_SITE}${resetToken}`;
+
+        const message = `
+          <h1>Password Reset</h1>
+          <p>You requested to reset your password. Click the link below to set a new password:</p>
+          <a href="${resetUrl}">${resetUrl}</a>
+
+          <p>If this is not you you can ingnore this message.</p>
+        `;
+
+        emailSender(user.email, "Password Reset Request", message);
+
+        res.status(200).json({ message: "Password reset link sent to email." });
+    } catch (error) {
+        return res.status(500).json({ error: "bad request." })
+    }
+
+});
+// for resetting the password.
+const resetPassword = async (req, res) => {
+    try {
+        const { token } = req.params;
+        const { newPassword } = req.body;
+
+        const hashedToken = crypto.createHash("sha256").update(token).digest("hex");
+        const user = await userScema.findOne({
+            resetPasswordToken: hashedToken,
+            resetPasswordExpires: { $gt: Date.now() },
+        });
+
+        if (!user) return res.status(400).json({ message: "Invalid or expired token." });
+
+        const salt = await bcrypt.genSalt(10);
+        const hashedPassword = await bcrypt.hash(newPassword, salt)
+
+        user.password = hashedPassword;
+        user.resetPasswordToken = undefined;
+        user.resetPasswordExpires = undefined;
+        await user.save();
+
+        res.status(200).json({ message: "Password reset successfully." });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ error: "Server error." });
+    }
+};
+
+
+
+
+module.exports = { setUser, loginUser, logout, refreshToken, updateUser, getUserUpdateAuthToken, userHasAccess, getUserDetails, requestPaswordResetLink, resetPassword }

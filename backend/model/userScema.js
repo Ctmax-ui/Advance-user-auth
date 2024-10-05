@@ -14,7 +14,8 @@ const createUserScema = new mongoose.Schema({
     twoFactorAuthentication: { type: Boolean, default: false },
 
     password: { type: String, required: [true, 'Password cannot be empty'] },
-    passwordResetOTP: { type: String, default: null },
+    resetPasswordToken: { type: String, default: "" },
+    resetPasswordExpires: { type: Date, default: "" },
 
     connectedDevices: [
         {

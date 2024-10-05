@@ -6,7 +6,9 @@ const { setUser,
     updateUser,
     getUserUpdateAuthToken,
     userHasAccess,
-    getUserDetails } = require('../controller/userController');
+    getUserDetails,
+    requestPaswordResetLink,
+    resetPassword } = require('../controller/userController');
 
 const { validateCreateUserInput,
     validateLoginUserInput,
@@ -14,21 +16,26 @@ const { validateCreateUserInput,
     authenticateUserUpdateToken } = require('../middleware/validateCRUD');
 
 const { authMiddleware } = require('../middleware/authMidleware');
-const { loginLimiter, logoutLimiter, registerLimiter } = require('../middleware/limiterMiddleware')
 
-
+const { loginLimiter, 
+    logoutLimiter, 
+    registerLimiter,
+    passwordResetLinkLimit,
+    passwordResetAndUpdateLimit } = require('../middleware/limiterMiddleware')
 
 
 const router = express.Router();
 
 // for user creating and updating
-router.route('/createuser')
-    .post(registerLimiter,validateCreateUserInput, setUser);
+router.route('/createuser').post(registerLimiter, validateCreateUserInput, setUser);
 
+// for forgatting password
+router.route('/requestrtoken').post(passwordResetLinkLimit,requestPaswordResetLink)
+router.route("/resetpassword/:token").post(passwordResetAndUpdateLimit,resetPassword);
 
 
 // for user login
-router.route('/login').post(loginLimiter,validateLoginUserInput, loginUser);
+router.route('/login').post(loginLimiter, validateLoginUserInput, loginUser);
 
 
 // for refresh token
@@ -36,7 +43,7 @@ router.route('/refreshtoken').post(refreshToken);
 
 
 // for logout
-router.route('/logout').post(logoutLimiter,logout);
+router.route('/logout').post(logoutLimiter, logout);
 
 router.use(authMiddleware);
 
