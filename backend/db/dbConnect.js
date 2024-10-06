@@ -1,8 +1,9 @@
 const mongoose = require('mongoose');
+require('dotenv').config()
 
 async function connect() {
     try {
-        const conn = await mongoose.connect('mongodb://127.0.0.1:27017/user?directConnection=true&serverSelectionTimeoutMS=2000&appName=mongosh+2.3.1')
+        const conn = await mongoose.connect(process.env.MONGO_CONNECTION_URL)
         console.log('enstablish db connection on',conn?.connection?.host);
     } catch (error) {
      console.log(error);   

@@ -18,7 +18,7 @@ app.use('/api/v1', require('./backend/routes/route') )
 app.listen(3000, ()=>{console.log('server on http://localhost:3000');})
 
 
-/* http://localhost:3000/api/v1/user  Post @for creating user.
+/* http://localhost:3000/api/v1/createuser  Post @for creating user.
 {"userName":"jitu", "userEmail":"jitu@gmail.com","password":"hi"}
 */
 
@@ -27,7 +27,7 @@ app.listen(3000, ()=>{console.log('server on http://localhost:3000');})
  {"userId":"66f4fd4966bfc50cbacb8511","password":"his"}
 
 
- http://localhost:3000/api/v1/user  Put @for updating user.
+ http://localhost:3000/api/v1/updateuser  Post @for updating user.
  {"userUpdateToken": "", "userName": "luck", "userEmail": "loggy"}
 */
 
