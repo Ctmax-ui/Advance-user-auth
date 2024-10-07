@@ -83,22 +83,23 @@ The server should now be running on http://localhost:3000.
 ## 4. Update User Token
 - **POST:** `/api/v1/userupdatetoken`  
 - **Body:**
-```json
-{
-  "password": "user"
-}
+ ```json
+ {
+   "password": "user"
+ }
+ ```
 - Description: Updates the user token and returns a new access token.
 
 ### 5. Update User Information
 - **POST**: `/api/v1/updateuser`
 - **Body:**
-```json
-{
-  "userName": "newUserName",
-  "userEmail": "newUserEmail",
-  "password": "newPassword"
-}
-```
+ ```json
+ {
+   "userName": "newUserName",
+   "userEmail": "newUserEmail",
+   "password": "newPassword"
+ }
+ ```
 - Description: Updates the user's information.
 
 ### 6. Get User Information
@@ -116,21 +117,21 @@ The server should now be running on http://localhost:3000.
 ### 9. Request Reset Token
 / **POST**: `/api/v1/requestrtoken`
 - **Body:**
-```json
-{
-  "userEmail": "user@gmail.com"
-}
-```
+ ```json
+ {
+   "userEmail": "user@gmail.com"
+ }
+ ```
 - Description: Sends a password reset link to the provided email.
 
 ### 10. Reset Password
 - **POST**: `/api/v1/resetpassword/:token`
 - **Body:**
-```json
-{
-  "password": "newPassword"
-}
-```
+ ```json
+ {
+   "password": "newPassword"
+ }
+ ```
 - Description: Resets the user's password using the provided reset token.
 
 ## Testing the API
