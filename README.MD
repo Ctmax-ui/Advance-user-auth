@@ -28,14 +28,9 @@ This is a simple Node.js and Express-based REST API that provides user authentic
 - **cors** for handling Cross-Origin Resource Sharing.
 - **dotenv** for environment variable management.
 
-## Project Structure
-├── config # Configuration files (e.g., environment variables) 
-├── controllers # Request handler logic for each route 
-├── models # Mongoose schemas for user data 
-├── routes # Route definitions and middlewares 
-├── middlewares # Custom middlewares for rate limiting, authentication, etc. 
-├── utils # Utility functions (e.g., email sender) 
-├── server.js # Entry point of the API      
-└── README.md # Project documentation
-
 ## Installation & Setup
+- 1. Clone the repository:
+ ```bash
+ git clone https://github.com/your-repo/user-auth-api.git
+ ```
+
