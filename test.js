@@ -18,3 +18,5 @@ export default function() {
   http.get('http://localhost:3000/api/v1/userhasaccess');
   sleep(1);
 }
+
+// k6 run test.js

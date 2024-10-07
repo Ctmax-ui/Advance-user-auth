@@ -7,7 +7,6 @@ const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY
 // for creating user validation middleware
 const validateCreateUserInput = (req, res, next) => {
     const { userName, userEmail, password, } = req.body;
-
     if (!userName || userName.trim() === '') {
         return res.status(400).json({ error: "User Name is required." });
     };
@@ -20,8 +19,6 @@ const validateCreateUserInput = (req, res, next) => {
     if (!password || password.trim() === '') {
         return res.status(400).json({ error: "Password is required." });
     };
-
-
     next();
 }
 
@@ -45,11 +42,7 @@ const validateLoginUserInput = (req, res, next) => {
 // authenticate user update token
 const authenticateUserUpdateToken = (req, res, next) => {
     const token = req.body.userUpdateToken;
-    console.log(req.body);
-    
     if (!token) return res.status(401).json({ error: "Access denied. No token provided." });
-
-
     try {
         const decoded = jwt.verify(token, JWT_SECRET_KEY);
         req.user = decoded; // Add user details to the request object
@@ -61,9 +54,7 @@ const authenticateUserUpdateToken = (req, res, next) => {
 
 // for updating user validation middleware
 const validateUpdateUserInput = (req, res, next) => {
-
     const { userName, userEmail, password } = req.body;
-
     if (userName && userName.length > 15) return res.status(400).json({ error: "User name is too long." });
 
     if (password && password.length > 30) {
@@ -71,9 +62,7 @@ const validateUpdateUserInput = (req, res, next) => {
     } else if (password && password.length < 4) {
         return res.status(400).json({ error: "Your password is too short." })
     };
-
     if (userEmail && !/^[\w-\.]+@([\w-]+\.)+[\w-]{2,4}$/.test(userEmail.trim())) res.status(400).json({ error: "User email is invalid, check the Email." });
-
     next();
 };
 

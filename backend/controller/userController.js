@@ -10,7 +10,7 @@ require('dotenv').config();
 const JWT_SECRET_KEY = process.env.JWT_SECRET_KEY;
 const JWT_REFRESH_KEY = process.env.JWT_REFRESH_KEY
 
-// @ for creating user {"userName":"jitu", "userEmail":"jitu@gmail.com","password":"hi","passwordConfirm":"hi"}
+// @ for creating user {"userName":"jitu", "userEmail":"jitu@gmail.com","password":"hi"}
 const setUser = asyncHandler(async (req, res) => {
     try {
         const { userName, userEmail, password } = req.body;
@@ -126,7 +126,6 @@ const loginUser = asyncHandler(async (req, res) => {
 
 // for genarating access token
 const refreshToken = (req, res) => {
-    // console.log(req);
     const { refreshToken } = req.cookies;
     try {
         if (!refreshToken) return res.status(401).json({ error: "Unauthorized" });
@@ -145,7 +144,6 @@ const refreshToken = (req, res) => {
 
 // for logout user
 const logout = async (req, res) => {
-    // Check if refreshToken exists in cookies
     if (!req.cookies.refreshToken) {
         return res.status(400).json({ success: false, message: "Login before logout." });
     }
@@ -156,7 +154,6 @@ const logout = async (req, res) => {
         const ipAddress = req.ip || req.connection.remoteAddress;
 
         const decoded = jwt.verify(req.cookies.refreshToken, JWT_REFRESH_KEY);
-        // console.log("Decoded JWT:", decoded);
 
         const foundUser = await userScema.findById(decoded.userId);
         if (!foundUser) {
