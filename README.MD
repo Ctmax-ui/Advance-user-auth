@@ -48,7 +48,7 @@ This is a simple Node.js and Express-based REST API that provides user authentic
  ```
 The server should now be running on http://localhost:3000.
 
-
+- **NOTE**: Also if you want to see an starter template with this api check here. [Frontend for advance user auth](https://github.com/Ctmax-ui/Frontend-for-advance-user-auth)
 
 ## API Endpoints
 
