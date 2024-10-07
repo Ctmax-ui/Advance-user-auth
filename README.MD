@@ -146,10 +146,6 @@ You can use tools like **Postman** or **cURL** to test the API endpoints locally
 4. Push to the branch (`git push origin feature-branch`).
 5. Create a Pull Request.
 
-## License
-
-This project is licensed under the MIT License.
-
 ## Future Enhancements
 
 - **Google OAuth Integration**
@@ -157,3 +153,23 @@ This project is licensed under the MIT License.
 - **Enhanced Rate Limiting and Security**
 
 Feel free to contribute or raise issues if you encounter any bugs!
+
+## License
+
+Advance user auth is licensed under the [Apache License, Version 2.0](LICENSE).
+
+```
+Copyright 2023 Praetorian Security, Inc
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+```
