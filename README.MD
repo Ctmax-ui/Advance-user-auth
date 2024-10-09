@@ -1,4 +1,4 @@
-# User Authentication REST API
+# User Authentication REST API.
 
 ## Overview
 This is a simple Node.js and Express-based REST API that provides user authentication features like user registration, login, and logout. The API is designed to be a scalable foundation for a complete authentication system and will later include support for Google OAuth, fingerprint, and passkey login. Currently, it supports traditional email/password-based authentication with JWT tokens for session management.
